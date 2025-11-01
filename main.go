@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
 func printSomething() {
 	fmt.Println("Something")
@@ -8,6 +11,8 @@ func printSomething() {
 
 func main() {
 	go printSomething()
+
+	time.Sleep(1 * time.Second)
 
 	fmt.Println("Something in main")
 }
