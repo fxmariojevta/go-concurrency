@@ -4,11 +4,21 @@ import (
 	"io"
 	"os"
 	"strings"
-	"sync"
 	"testing"
 )
 
-func TestPrintSomething(t *testing.T) {
+func Test_updateMessage(t *testing.T) {
+	expected := "something"
+	wg.Add(1)
+	go updateMessage(expected)
+	wg.Wait()
+
+	if msg != expected {
+		t.Errorf("output: %s, expected: %s", msg, expected)
+	}
+}
+
+func Test_printMessage(t *testing.T) {
 	expected := "Something"
 
 	stdOut := os.Stdout
@@ -19,10 +29,10 @@ func TestPrintSomething(t *testing.T) {
 	}
 	os.Stdout = w
 
-	var wg sync.WaitGroup
 	wg.Add(1)
-	go printSomething(expected, &wg)
+	go updateMessage(expected)
 	wg.Wait()
+	printMessage()
 
 	err = w.Close()
 	if err != nil {
@@ -39,6 +49,6 @@ func TestPrintSomething(t *testing.T) {
 	os.Stdout = stdOut
 
 	if output != expected {
-		t.Errorf("Output: %s but Expected %s", output, expected)
+		t.Errorf("output: %s but expected %s", output, expected)
 	}
 }
