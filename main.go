@@ -5,31 +5,43 @@ import (
 	"sync"
 )
 
-var msg string
 var wg sync.WaitGroup
 
-func updateMessage(s string) {
-	defer wg.Done()
-	msg = s
-}
-
-func printMessage() {
-	fmt.Println(msg)
+type Income struct {
+	Source string
+	Amount int
 }
 
 func main() {
-	msg = "Hello, world"
+	var bankBalance int
+	var muBalance sync.Mutex
 
-	words := []string{
-		"universe",
-		"cosmos",
-		"world!",
+	fmt.Printf("Initial bank balance: $%d.00\n", bankBalance)
+
+	incomes := []Income{
+		{Source: "Main job", Amount: 500},
+		{Source: "Gift", Amount: 10},
+		{Source: "Part time job", Amount: 50},
+		{Source: "Investment", Amount: 100},
 	}
 
-	for _, x := range words {
-		wg.Add(1)
-		go updateMessage(x)
-		wg.Wait()
-		printMessage()
+	wg.Add(len(incomes))
+
+	for i, income := range incomes {
+		go func(i int, income Income) {
+			defer wg.Done()
+
+			for week := 1; week <= 52; week++ {
+				muBalance.Lock()
+				bankBalance += income.Amount
+				muBalance.Unlock()
+				// In windows, executing below line will ended up with infinite loop when running test
+				// fmt.Printf("On week %d, you have earned $%d.00 form %s\n", week, income.Amount, income.Source)
+			}
+		}(i, income)
 	}
+
+	wg.Wait()
+
+	fmt.Printf("Final bank balance: $%d.00", bankBalance)
 }
