@@ -1,47 +1,30 @@
 package main
 
-import (
-	"fmt"
-	"sync"
-)
+const NumberOfPizzas = 10
 
-var wg sync.WaitGroup
+var pizzasMade, pizzasFailed, total int
 
-type Income struct {
-	Source string
-	Amount int
+type Producer struct {
+	data chan PizzaOrder
+	quit chan chan error
+}
+
+type PizzaOrder struct {
+	pizzaNumber int
+	message     string
+	success     bool
 }
 
 func main() {
-	var bankBalance int
-	var muBalance sync.Mutex
+	// seed the number generator
 
-	fmt.Printf("Initial bank balance: $%d.00\n", bankBalance)
+	// print out a message
 
-	incomes := []Income{
-		{Source: "Main job", Amount: 500},
-		{Source: "Gift", Amount: 10},
-		{Source: "Part time job", Amount: 50},
-		{Source: "Investment", Amount: 100},
-	}
+	// create a producer
 
-	wg.Add(len(incomes))
+	// run the producer in the background
 
-	for i, income := range incomes {
-		go func(i int, income Income) {
-			defer wg.Done()
+	// create and run consumer
 
-			for week := 1; week <= 52; week++ {
-				muBalance.Lock()
-				bankBalance += income.Amount
-				muBalance.Unlock()
-				// In windows, executing below line will ended up with infinite loop when running test
-				// fmt.Printf("On week %d, you have earned $%d.00 form %s\n", week, income.Amount, income.Source)
-			}
-		}(i, income)
-	}
-
-	wg.Wait()
-
-	fmt.Printf("Final bank balance: $%d.00", bankBalance)
+	// print out the ending message
 }
