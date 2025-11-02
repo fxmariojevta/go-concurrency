@@ -1,26 +1,29 @@
 package main
 
 import (
-	"io"
-	"os"
-	"strings"
 	"testing"
+	"time"
 )
 
-func Test_main(t *testing.T) {
-	stdOut := os.Stdout
-	r, w, _ := os.Pipe()
+func Test_dine(t *testing.T) {
+	var theTests = []struct {
+		name  string
+		delay time.Duration
+	}{
+		{"zero delay", 0 * time.Second},
+		{"quarter second delay", 250 * time.Millisecond},
+		{"half second delay", 500 * time.Millisecond},
+	}
 
-	os.Stdout = w
-	main()
-	_ = w.Close()
+	for _, e := range theTests {
+		eatTime = e.delay
+		sleepTime = e.delay
+		thinkTime = e.delay
 
-	result, _ := io.ReadAll(r)
-	output := string(result)
-
-	os.Stdout = stdOut
-
-	if !strings.Contains(output, "$34320.00") {
-		t.Errorf("wrong balance returned")
+		orderFinished = []string{}
+		dine()
+		if len(orderFinished) != 5 {
+			t.Errorf("incorrect length of slice; expected : 5 but got %d", len(orderFinished))
+		}
 	}
 }
