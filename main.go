@@ -2,46 +2,68 @@ package main
 
 import (
 	"fmt"
-	"sync"
+	"math/rand"
+	"time"
+
+	"github.com/fatih/color"
 )
 
-var wg sync.WaitGroup
-
-type Income struct {
-	Source string
-	Amount int
-}
+var seatingCapacity = 10
+var arrivalRate = 100
+var cutDuration = 1000 * time.Millisecond
+var timeOpen = 10 * time.Second
 
 func main() {
-	var bankBalance int
-	var muBalance sync.Mutex
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 
-	fmt.Printf("Initial bank balance: $%d.00\n", bankBalance)
+	color.Yellow("The Sleeping Barber Problem")
+	color.Yellow("---------------------------")
 
-	incomes := []Income{
-		{Source: "Main job", Amount: 500},
-		{Source: "Gift", Amount: 10},
-		{Source: "Part time job", Amount: 50},
-		{Source: "Investment", Amount: 100},
+	clientChan := make(chan string, seatingCapacity)
+	doneChan := make(chan bool)
+
+	shop := BarberShop{
+		ShopCapacity:    seatingCapacity,
+		HairCutDuration: cutDuration,
+		NumberOfBarber:  0,
+		ClientsChan:     clientChan,
+		BarbersDoneChan: doneChan,
+		Open:            true,
 	}
 
-	wg.Add(len(incomes))
+	color.Green("The shop is open for the day")
 
-	for i, income := range incomes {
-		go func(i int, income Income) {
-			defer wg.Done()
+	shop.addBarber("Frank")
+	shop.addBarber("Gerard")
+	shop.addBarber("Milton")
+	shop.addBarber("Susan")
+	shop.addBarber("Kelly")
+	shop.addBarber("Pat")
 
-			for week := 1; week <= 52; week++ {
-				muBalance.Lock()
-				bankBalance += income.Amount
-				muBalance.Unlock()
-				// In windows, executing below line will ended up with infinite loop when running test
-				// fmt.Printf("On week %d, you have earned $%d.00 form %s\n", week, income.Amount, income.Source)
+	shopClosing := make(chan bool)
+	closed := make(chan bool)
+
+	go func() {
+		<-time.After(timeOpen)
+		shopClosing <- true
+		shop.closeShopForDay()
+		closed <- true
+	}()
+
+	i := 1
+
+	go func() {
+		for {
+			randomMilliseconds := r.Int() % (2 * arrivalRate)
+			select {
+			case <-shopClosing:
+				return
+			case <-time.After(time.Millisecond * time.Duration(randomMilliseconds)):
+				shop.addClient(fmt.Sprintf("Client %d", i))
+				i++
 			}
-		}(i, income)
-	}
+		}
+	}()
 
-	wg.Wait()
-
-	fmt.Printf("Final bank balance: $%d.00", bankBalance)
+	<-closed
 }
